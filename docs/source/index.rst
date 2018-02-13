@@ -11,11 +11,14 @@ Welcome to ardas documentation!
    :caption: Contents:
 
    getting_started
+   pi_configuration
    sensors
+   connect_1_wire_sensors
    settings
    automatic_start_on_boot
    build_arduino_sketch
    commands
+   minicom
 
 
 Indices and tables

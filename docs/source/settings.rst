@@ -120,3 +120,46 @@ These settings are used to define how to transfer updates of raspardas.py to the
         'remote_path': '*path_to_remote_file*'
     }
 
+
+``CSV_HEADER``
+--------------
+
+Your CSV file header::
+
+    CSV_HEADER = ["sensorID", "sensorName", "value", "timestamp"]
+
+``ARDAS_DIR``
+-------------
+
+The absolute path to the project::
+
+    PIDAS_DIR = '/home/USERNAME/ardas'
+
+``DATA_FILE``
+-------------
+
+File where your date will be saved::
+
+    DATA_FILE = 'data.csv'
+
+``LOG_DIR``
+-----------
+
+The relative path directory to your logs::
+
+    LOG_DIR = 'logs/'
+
+``NB_SENSOR``
+-------------
+
+Number of sensors you want to generate::
+
+    NB_SENSOR = 8
+
+``SIMULATION_MODE``
+-------------------
+
+If simulation mode is set to 1, sensors will be created::
+
+   SIMULATION_MODE = 0
+
