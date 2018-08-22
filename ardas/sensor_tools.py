@@ -2,51 +2,51 @@ import numpy as np
 import os
 from pickle import dump, load
 import logging
+from time import sleep
+try:
+    from w1thermsensor import W1ThermSensor
 
-cur_dir = os.path.dirname(os.path.realpath(__file__))
+    class TempSensor(W1ThermSensor):
+        def __init__(self, sensor_type=None, sensor_id=None, name=None):
+            super(TempSensor, self).__init__(sensor_type=sensor_type, sensor_id=sensor_id)  # TODO: check this use of super...
+            self.__name = name
+
+        @property
+        def name(self):
+            """Gets and sets sensor name
+            """
+            return self.__name
+
+        @name.setter
+        def name(self, val):
+            if val is not None:
+                self.__name = str(val)
+            else:
+                self.name = '%s%s' % ('28-', self.id)
+
+        def save(self):
+            """Save the sensor as a serialized object to a file """
+            f_name = cur_dir / 'sensor_' + self.name + '.ssr'
+            if Path(f_name).exists():
+                logging.warning('Sensor file ' + f_name + ' already exists, unable to save sensor')
+            else:
+                with open(f_name, 'wb') as sensor_file:
+                    dump(self, sensor_file)
+
+except:
+    from ardas.fake_sensor import FakeTempSensor
+
+    class TempSensor(FakeTempSensor):
+        def __init__(self):
+            super(TempSensor, self).__init__()   # TODO: check this use of super...
+
+cur_dir = Path(__file__).resolve().parent  # os.path.dirname(os.path.realpath(__file__))
 
 
-def polynomial(value, coefs):
-    """Compute polynomial using Horner method
-
-    :param value: given value of the variable
-    :param coefs: coefficients of the polynomial
-    :return: evaluation of polynomial for the given value of the variable
-    :rtype: float
-    """
-
-    result = coefs[-1]
-    for i in range(-2, -len(coefs) - 1, -1):
-        result = result * value + coefs[i]
-    assert isinstance(result, float)
-    return result
-
-
-def running_average(n):
-    """Compute a running average (not centered)
-
-    :param n: number of former samples used to compute the running average
-    :return: evaluation of polynomial for the given value of the variable (freq)
-    :rtype: float
-    """
-
-    l = []
-    average = None
-    while True:
-        new_elt = yield average
-        if len(l) == n:
-            del l[0]
-        l.append(new_elt)
-        if len(l) > 0:
-            average = sum(l) / len(l)
-        else:
-            average = np.nan
-
-
-def load_sensor(sensor_id):
+def load_sensor(id):
     """Loads a sensor object from a sensor '.ssr' file
 
-    :param sensor_id: a unique identification number of the sensor
+    :param id: a unique identification number of the sensor
     :return: a sensor object
     :rtype: sensor"""
     f_name = os.path.join(cur_dir,'sensor_' + sensor_id + '.ssr')
@@ -127,8 +127,6 @@ class UncalibratedFMSensor(FMSensor):
         super().__init__(sensor_id=sensor_id, log_output=log_output)
 
 
+
 if __name__ == '__main__':
-    t = polynomial(25000, [-16.9224032438, 0.0041525221, -1.31475837290789e-07, 2.39122208189129e-12,
-                           -1.72530800355418e-17])
-    print(t)
-    print(cur_dir)
+    pass
