@@ -9,7 +9,6 @@ from ardas.settings import DATABASE, DATA_LOGGING_CONFIG, LOGGING_CONFIG
 
 def influxdb_log_event(influxdb_client, title, default_tags, event_args,  msg_logger):
     """ Log an event in the influxdb series
-
     :param influxdb_client:
     :param title:
     :param default_tags:
@@ -18,55 +17,59 @@ def influxdb_log_event(influxdb_client, title, default_tags, event_args,  msg_lo
     :param event_time:
     :return:
     """
-    decoded_event_args = decode_event_args(event_args, default_tags)
-    event = [{'measurement': 'events', 'time': decoded_event_args['event_time'],
-             'fields': {'value': 1, 'tags': decoded_event_args['tags'], 'text': decoded_event_args['comment'],
-                        'title': title}
-              }]
-    msg_logger.debug('Writing event "%s: %s" with tag(s) "%s" to %s @%s'
-                     % (title, decoded_event_args['comment'], decoded_event_args['tags'], DATABASE['dbname'],
-                        decoded_event_args['event_time']))
-    event_written = False
-    while not event_written:
-        try:
-            influxdb_client.write_points(event)
-            event_written = True
-        except Exception as e:
-            msg_logger.error(e)
-            msg_logger.debug('Unable to store event "%s: %s" with tag(s) "%s" to %s @%s'
-                             % (title, decoded_event_args['comment'], decoded_event_args['tags'], DATABASE['dbname'],
-                                decoded_event_args['event_time']))
-            sleep(5)
-            msg_logger.debug('Retry storing event "%s: %s" with tag(s) "%s" to %s @%s'
-                             % (title, decoded_event_args['comment'], decoded_event_args['tags'], DATABASE['dbname'],
-                                decoded_event_args['event_time']))
-    msg_logger.info('Event "%s" with tag(s) "%s" written to %s @%s'
-                    % (decoded_event_args['comment'], decoded_event_args['tags'], DATABASE['dbname'],
-                       decoded_event_args['event_time']))
+    if DATA_LOGGING_CONFIG['influxdb_logging']:
+        decoded_event_args = decode_event_args(event_args, default_tags)
+        event = [{'measurement': 'events', 'time': decoded_event_args['event_time'],
+                 'fields': {'value': 1, 'tags': decoded_event_args['tags'], 'text': decoded_event_args['comment'],
+                            'title': title}
+                  }]
+        msg_logger.debug('Writing event "%s: %s" with tag(s) "%s" to %s @%s'
+                         % (title, decoded_event_args['comment'], decoded_event_args['tags'], DATABASE['dbname'],
+                            decoded_event_args['event_time']))
+        event_written = False
+        while not event_written:
+            try:
+                influxdb_client.write_points(event)
+                event_written = True
+            except Exception as e:
+                msg_logger.error(e)
+                msg_logger.debug('Unable to store event "%s: %s" with tag(s) "%s" to %s @%s'
+                                 % (title, decoded_event_args['comment'], decoded_event_args['tags'], DATABASE['dbname'],
+                                    decoded_event_args['event_time']))
+                sleep(5)
+                msg_logger.debug('Retry storing event "%s: %s" with tag(s) "%s" to %s @%s'
+                                 % (title, decoded_event_args['comment'], decoded_event_args['tags'], DATABASE['dbname'],
+                                    decoded_event_args['event_time']))
+        msg_logger.info('Event "%s" with tag(s) "%s" written to %s @%s'
+                        % (decoded_event_args['comment'], decoded_event_args['tags'], DATABASE['dbname'],
+                           decoded_event_args['event_time']))
+    else:
+        msg_logger.debug('Unable to log event: logging to influxdb is not active...')
 
 
 def influxdb_clean_events(influxdb_client, msg_logger):
     """ Erase all events in influxdb series
-
     :param influxdb_client:
     :param msg_logger:
     :return:
     """
-    msg_logger.info('Deleting all events from %s' % DATABASE['dbname'])
-    events_deleted = False
-    while not events_deleted:
-        try:
-            influxdb_client.delete_series(measurement='events')
-        except Exception as e:
-            msg_logger.error(e)
-            sleep(5)
-            msg_logger.debug('Retry deleting events...')
-    msg_logger.info('Events successfully deleted')
+    if DATA_LOGGING_CONFIG['influxdb_logging']:
+        msg_logger.info('Deleting all events from %s' % DATABASE['dbname'])
+        events_deleted = False
+        while not events_deleted:
+            try:
+                influxdb_client.delete_series(measurement='events')
+            except Exception as e:
+                msg_logger.error(e)
+                sleep(5)
+                msg_logger.debug('Retry deleting events...')
+        msg_logger.info('Events successfully deleted')
+    else:
+        msg_logger.debug('Unable to log event: logging to influxdb is not active...')
 
 
 def decode_event_args(event_args, default_tags='message'):
     """ Decodes event arguments of the type [comment text] [-tags tag1 tag2 ...] [-datetime YYYY mm dd HH MM SS]
-
     :param event_args: string that contain the event arguments
     :param default_tags: comma separated default tags to add to tags given in arguments
     :return: a dict of
@@ -126,7 +129,7 @@ def decode_event_args(event_args, default_tags='message'):
 if __name__ == '__main__':
     stop = False
     influxdb_clean = False
-    influxdb_logging = DATA_LOGGING_CONFIG['influxdb_logging']
+    mqtt_logging = DATA_LOGGING_CONFIG['influxdb_logging']
     influxdb_client = None
 
     # setup loggers
@@ -156,7 +159,7 @@ if __name__ == '__main__':
     msg_logger.addHandler(msg_handler)
     msg_logger.setLevel(logging_level)
 
-    if influxdb_logging:
+    if mqtt_logging:
         try:
             msg_logger.info('Connecting to database: %s' % DATABASE['dbname'])
             influxdb_client = InfluxDBClient(DATABASE['host'], DATABASE['port'], DATABASE['user'], DATABASE['password'],
