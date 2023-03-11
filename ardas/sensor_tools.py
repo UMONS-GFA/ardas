@@ -35,6 +35,18 @@ def running_average(x, **kwargs):
     return np.mean(x)
 
 
+def set_pin(pin, safe_pins=(12, 6, 13, 16, 19, 20, 26, 21), mode=GPIO.OUT, level=GPIO.LOW):
+    """ Sets the pin mode and level
+        This method should be added as an init_method to sensors that have a method to activate a pin
+    """
+    if pin in safe_pins:
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(pin, mode)
+        GPIO.output(pin, level)
+        logging.info('Setting ' + str(pin) + ' to ' + str(mode) + ' ' + str(level) + '.')
+
+
 def activate_pin(pin, delay, safe_pins=(12, 6, 13, 16, 19, 20, 26, 21)):
     """ Activates a pin of the raspberry pi in output mode for the number of seconds specified in delay"""
     if pin in safe_pins:
@@ -92,7 +104,7 @@ def load_sensor(sensor_id):
 class FMSensor(object):
     def __init__(self, sensor_id='0000', processing_method=polynomial, processing_parameters={'coefs': (0,1)},
                  quantity='freq.', units='Hz', output_format='%11.4f', short_term_memory=1, log_output=True,
-                 initial_values=None):
+                 initial_values=None, init_method = None, init_method_kwargs = None):
         self.__sensor_id = sensor_id
         self.processing_method = processing_method
         self.processing_parameters = processing_parameters
@@ -103,6 +115,8 @@ class FMSensor(object):
         else:
             assert isinstance(initial_values, np.ndarray)
             self._value = initial_values
+        if init_method is not None:
+            init_method(**init_method_kwargs)
         self._processed_value = self.processing_method(self.value, **self.processing_parameters)
         self.quantity = quantity
         self.units = units
