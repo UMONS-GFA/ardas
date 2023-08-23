@@ -150,7 +150,10 @@ def init_logging():
         msg_logger.info('   units: ' + s.units)
         msg_logger.info('   processing method: ' + repr(s.processing_method))
         msg_logger.info('   processing parameters: ' + repr(s.processing_parameters))
-        msg_logger.info('   logging output to influxDB: ' + repr(s.log))
+        msg_logger.info('   logging output to influxDB: ' + repr(s.log))  # TODO: remove this?
+        msg_logger.info('   initialization...')
+        if s.init_method is not None:
+            s.init_method(**s.init_method_kwargs)
         msg_logger.info('')
     try:
         slave_io = serial.Serial(ARDAS_CONFIG['tty'], baudrate=57600, timeout=0.25, bytesize=serial.EIGHTBITS,
