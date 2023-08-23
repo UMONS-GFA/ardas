@@ -78,10 +78,10 @@ def open_valve_if_full(x, **kwargs):
     condition = kwargs.pop('condition', '==0.')
     pin = kwargs.pop('pin', 12)
     delay = kwargs.pop('delay', 30.)
-    safe_pins = kwargs.pop('safe_pins', tuple(12))
+    safe_pins = kwargs.pop('safe_pins', (12,))
     logging.debug('Sensor freq. :' + ', '.join([str(i[0]) for i in x]) + 'Hz')
     empty_dict = {}
-    # cond = 'not (' + str(x[-2][0]) + condition + ') and (' + str(x[-1][0]) + condition + ')'
+    cond = 'not (' + str(x[-2][0]) + condition + ') and (' + str(x[-1][0]) + condition + ')'
     # print('Condition: '+ cond)
     if eval(cond):
         activate_pin(pin, delay, safe_pins)
@@ -115,13 +115,14 @@ class FMSensor(object):
         else:
             assert isinstance(initial_values, np.ndarray)
             self._value = initial_values
-        if init_method is not None:
-            init_method(**init_method_kwargs)
         self._processed_value = self.processing_method(self.value, **self.processing_parameters)
         self.quantity = quantity
         self.units = units
         self.output_format = output_format
         self.log = log_output
+        if init_method is not None:
+            print(f'starting {init_method}({init_method_kwargs})...')
+            init_method(**init_method_kwargs)
 
     @property
     def sensor_id(self):
