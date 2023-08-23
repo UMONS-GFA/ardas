@@ -120,9 +120,8 @@ class FMSensor(object):
         self.units = units
         self.output_format = output_format
         self.log = log_output
-        if init_method is not None:
-            print(f'starting {init_method}({init_method_kwargs})...')
-            init_method(**init_method_kwargs)
+        self.init_method = init_method
+        self.init_method_kwargs = init_method_kwargs
 
     @property
     def sensor_id(self):
